@@ -1,0 +1,226 @@
+INSTALLATION OF DOCKER
+-------------------------
+REQUIREMENTS
+
+1)AMI -> linux2
+2)Instance type -> t2.micro
+3)Security group ->all-traffic
+4)Terminal -> mobaxterm
+
+PROCEDURE
+---------------
+
+1) $vi docker.sh
+
+Script
+-------
+sudo yum update -y
+sudo yum search docker
+sudo yum info docker
+sudo yum install -y docker
+sudo systemctl enable docker.service
+sudo systemctl start docker.service
+sudo systemctl status docker.service
+docker --version
+sudo yum install git -y
+sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
+esc :wq
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+TASK1: PULL ONE HTTPD IMAGE AND RUN THAT CONTAINER
+
+1) $docker pull httpd
+
+2) $docker images
+
+3) $docker run -it -d httpd
+
+4) $docker rm container-id
+
+5) $docker stop container-id
+
+6) $docker ps -a
+
+7) $docker start container-id
+
+8) $docker stop container-id
+
+9) $docker rm container-id
+
+10) $docker rmi image-name(httpd)
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+TASK2:PULL ONE HTTPD IMAGE AND RUN A CONTAINER AND TAKE A SNAPSHOT AND THEN PUSH INTO DOCKERHUB
+
+1) $docker pull httpd
+2) $docker run -it -d httpd
+3) $docker ps
+4) $docker commit faaefd998f1b sowmyayp8/demo
+5) $docker push sowmyayp8/demo
+6) $docker login
+	username: sowmyayp8
+	password: ..........
+7) $docker push sowmyayp8/demo
+
+---------------------------------------------------------------------------------------------------------
+
+TASK 3:PULL ONE WEB SERVER NGINX AND RUN A CONTAINER AND IT IN A  CHROME TAB
+
+1) $docker pull nginx
+2) $docker images
+3) $docker run -it -d -p 8000:80 nginx
+4) $docker ps
+5) $copy public ip and paste in chrome ->  ex:public Ip:8000
+6) $docker stop containerid
+7) $docker rm containerid
+8) $docker rmi imagename
+
+----------------------------------------------------------------------------------------------------------
+
+TASK4 : PULL ONE AMAZON-LINUX IMAGE AND RUN THE CONTAINER AND INSTALL TOMCAT INSIDE THAT CONTAINER
+
+1) $docker pull amazonlinux
+2) $docker run -it -d amazonlinux
+3) $docker ps
+4) $docker exec -it containerid /bin/bash
+5) $ls
+6) go to chrome -> search for apache tomcat  download -> select version 9 -> right click on  tar.gz and copy link address
+7) $wget paste the that you copied
+8) $yum install wget -y
+9) $wget paste the that you copied
+10) $yum install tar -y
+11) $yum install gzip -y
+12) $ls
+13) $tar -zxvf apache-tomcat-9.0.83.tar.gz(file-name)
+14) $ls
+15) $cd extracted-apache-tomcat-file-name
+16) $cd bin/
+17) $sh stratupp.sh
+18) $yum install java -y
+19) $sh startup.sh
+
+------------------------------------------------------------------------------------------------------------------------
+
+TASK 5:DCKERFILE
+
+1) $mkdir Dockerfile
+2) $cd Dockerfile
+3) $vi dockerfile
+
+	FROM amazonlinux
+
+	MAINTAINER "sowmyayp8@gmail.com"
+
+	RUN yum update -y
+
+	RUN yum install -y wget
+
+	RUN yum install -y tar
+
+	RUN yum install -y gzip
+
+	RUN wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.84/bin/apache-tomcat-9.0.84.tar.gz
+	RUN tar -zxvf apache-tomcat-9.0.84.tar.gz
+
+	RUN yum install -y java
+
+	RUN sh apache-tomcat-9.0.84/bin/startup.sh
+:wq
+
+4) $cd ..
+
+5) $docker build -t sowmyayp8/demo Dockerfile(directory name)
+
+6) $docker run -it -d sowmyayp8/demo(customized-image-name)
+
+7) $docker ps
+
+8) $docker exec -it containerid /bin/bash
+
+9) $ls
+ 
+10) $cd apache-tomcat-9.0.83(file name)
+
+11) $cd bin/
+
+12) $sh startup.sh
+
+------------------------------------------------------------------------------------------------------
+
+TASK 6:DOCKER-COMPOSE
+
+1) $vi docker-compose.yml
+	
+version: '3'
+services:
+  web:
+    image: nginx
+    ports:
+      - 4000:80
+  db:
+    image: redis
+:wq
+
+2) $docker-compose up -d
+
+3) $docker ps
+
+4) $docker-compose down
+
+5) $docker rmi nginx redis
+
+6) $rm docker-compose.yml
+
+--------------------------------------------------------------------------------------------------------------------
+
+TASK 7: DOCKER VOLUME
+
+1) $docker volume create sigma
+2) $docker volume inspect sigma
+3) $cd /var/lib/docker
+4) $ls
+5) $cd volumes/
+6) $docker volume ls
+7) $docker pull httpd
+8) $docker run -it -d httpd
+9) $docker ps
+10) $docker exec -it c80263ca8d2b /bin/bash
+11) $docker stop c80263ca8d2
+12)  $docker rm c80263ca8d2b
+
+13) duplicate the tab
+14) $ docker run -it -d -v sigma:/usr/local/apache2/htdocs/ -p 8000:80 httpd
+15) $docker ps
+16) $docker exec -it 6e42045de56a /bin/bash
+17) $ls
+18)  $cd htdocs
+ 19) $ls
+
+
+----------------------------------------------------------------------------------------------
+TO INSTALL DOCKER-COMPOSE
+
+sudo yum update -y
+sudo yum search docker
+sudo yum info docker
+sudo yum install -y docker
+sudo systemctl enable docker.service
+sudo systemctl start docker.service
+sudo systemctl status docker.service
+docker --version
+sudo yum install git -y
+sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
+
+
+
+
+

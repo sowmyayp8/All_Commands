@@ -1,0 +1,367 @@
+Installation
+
+---------------
+REQUIREMENTS
+1) AMI -> AMAZON LINUX2
+2)INSTANCE-TYPE -> t2.micro
+3)SECURITY-GROUP -> allow all-traffic
+4)TERMINAL -> Mobaxterm
+
+
+steps:
+
+1) go to chrome ->search for jenkins download ->click on  the linux link -> click ond redhat link ->click on long-term release ->copy the code
+
+2) $vi jen.sh
+	paste the code that you copied from the browser   
+:wq
+
+3) $sh jen.sh
+
+4) $jenkins --version
+
+5) $sudo yum install java-11* -y
+
+6) $jenkins --version
+
+7) To access the jenkins -> copy the pblic ipv4 of instance and paste it in the new tab with port no. 8080
+   ex: public ipv4:8080
+
+8) $systemctl start jenkins
+
+9) go to tab where you pasted public ip and there you have the path of jenkins ->copy it
+
+10) $sudo cat paste-the-path($sudo cat /var/lib/jenkins/secrets/initialAdminPassword) --->it will generate the password
+
+11)copy the password and paste in password field -->in the jenkins tab
+
+12)click on install suggested plugins -->wait until all get started
+
+13)click on get started
+14) provide the necessary fields
+
+	USERNAME:admin
+	PASSWORD:admin
+	CONFIRM-PASSWORD:admin
+	FULL-NAME:admin
+	EMAIL-ADDRESS:admin@gmail.com
+		save and continue
+	        save and finish
+
+15)click on start using Jenkins
+
+---------------------------------------------------------------------------------------------------------------
+
+
+TASK 1:CREATE A JENKINS JOB WITH FREESTYLE PROJECT TO PRINT HELLO DEVOPS
+
+1) $click on new item -> provide project name ->select freestyle project -> ok
+
+2)click on build steps -> add build steps -> execute shell ->echo "hello devops" -> apply and then save
+
+3)click on build  now 
+
+4)if you want changes click on configure
+
+-------------------------------------------------------------------------------------------------------------
+
+TASK2:CREATE A JOB WITH FREESTYLE PROJECT TO GET TO KNOW THE UPTIME OF SERVER FOR EACH MINUTE
+
+1) new item->freestyle project ->ok
+2) build triggers -> build periodically ->type * * * * *
+3) build step -> uptime
+4) build now
+
+----------------------------------------------------------------------------------------
+
+TASK 3: CREATE A FREESTYLE JOB TO PREPARE A BUILD
+
+1)load the maven tool to jenkins
+ ->manage jenkins ->tools ->maven installation ->add maven
+->provide maven name ->version(3.9.6 default)->select the checkbox
+->apply and save
+
+2)new item->freestyle project->ok
+3)$sudo yum install git 
+4)in source code management->select git ->provide github repository url that contains pom.xml and src file
+5)branch ->master
+6)build steps-> add build step ->invoke top level maven target
+7)maven version->provide maven tool name
+8)goals -> clean package
+9)apply and save
+10)build now ->in workspace target file is generated 
+
+
+-------------------------------------------------------------------------------------------
+
+TASK 4:CREATE A FREESTYLE JOB TO PREPARE BUILD FOR EVERY ONE MINUTE INTERVAL WHEN THE CHANGES ARE MADE IN THE GITHUB REPOSITORY
+
+1) new item ->free style project ->ok
+2) in source code management -> git ->provide github repository url that contains pom.xml and src
+3) branch ->master
+4)build steps-> add build step ->invoke top level maven target
+5)maven version->provide maven tool name
+6)goals -> clean package
+7) build triggers ->poll SCM
+8) apply and save
+10) build now
+
+NOTE: If you do changes in source code[in github repository] automatically for every minute the build is prepared
+
+------------------------------------------------------------------------------------------------
+
+TASK 5:CREATE A FREESTYLE JOB TO PREPARE A BUILD WHEN CHANGES ARE MADE IN THE GITHUB REPOSITORY
+
+1)new item ->provide name -> freestyle project ->ok
+2)in source code management -> git ->provide github repository url that contains pom.xml and src
+3)build steps-> add build step ->invoke top level maven target
+4)maven version->provide maven tool name
+5)goals -> clean package
+6) build triggers ->github hook
+7) apply and save
+
+we need to configure the github repository
+1)go inside the repository
+2)settings
+3)web hook
+4)add webhook
+4)in payload url ->[remove the old data]paste jenkins tab url[upto public ip:8080]/github-webhook/
+5)content type ->application/json
+6)add web hook
+
+8)build now
+
+note:when you do changes in source code[github repository] automatically the build will be done
+
+-----------------------------------------------------------------------------------------------------
+JENKINS PIPELINE
+
+TASK1 : DO THE UPSTREAM AND DOWNSTREAM PROJECT
+1)new item ->provide name(build) -> freestyle project ->ok
+2)build step ->execute shell -> echo "build is done"
+3)apply and save
+
+1)new item ->provide name(test) -> freestyle project ->ok
+2)build triggers ->build after other projects are done ->select project to watch means upstream project(build)
+3)trigger only if build is stable
+4)build step ->execute shell ->echo "testing success"
+5)apply and save
+
+1)new item ->provide name(deploy) -> freestyle project ->ok
+2)build triggers ->build after other projects are done ->select upstream project(test)
+3)trigger only if build is stable
+4)build step ->execute shell ->echo "deployment success"
+5)apply and save
+
+--------------------------------------------------------------------------------------------------------
+
+TASK2: CREATE A PIPELINE JOB TO CLONE THE GITHUB REPOSITORY AND DO A COMPILE AND TEST BY USING MAVEN TOOL
+
+1)manage jenkins ->tools ->add maven -> provide name ->apply and save
+
+2)new item -> project name ->select pipeline -> ok
+
+3)$sudo yum install git 
+
+4)in pipeline -> pipeline script
+
+	pipeline {
+    agent any
+    tools{
+        maven 'maven'
+    }
+
+    stages {
+        stage('git clone') {
+            steps {
+                git  'https://github.com/sowmyayp8/maven.git'
+            }
+        }
+        stage('compile') {
+            steps {
+                sh  'mvn compile'
+            }
+        }
+        stage('test') {
+            steps {
+                sh  'mvn test'
+            }
+        }
+    }
+}
+5)apply and save
+6)build now
+
+------------------------------------------------------------------------------------------------
+TASK 3: CREATE A PIPELINE JOB  TO EXECUTE COMPILE, TEST AND PACKAGE BY USING MAVEN TOOL BY DEFINING PIPELINE SCRIPT FROM SCM
+
+1)new item -> provide name ->pipeline ->ok
+2)in pipeline -> pipeline script from SCM
+3)SCM ->git
+4)Repository url ->provide github url which contains pom.xml and src
+5)Script path ->Jenkinsfile
+6)in github you need to create Jenkinsfile(in pom.xml and src repository) 
+	1) add file ->create new file->Jenkinsfile(filename)
+	2) type code
+
+	 pipeline
+{
+  agent any
+  tools{
+    maven 'maven'
+  }
+  stages{
+    stage('compile'){
+      steps{
+        sh 'mvn compile'
+      }
+    }
+    stage('test'){
+      steps{
+        sh 'mvn test'
+      }
+    }
+    stage('package'){
+      steps{
+        sh 'mvn package'
+      }
+    }
+  }
+}
+
+7)apply and save
+8)build now
+
+-----------------------------------------------------------------------------------------------
+
+TASK 4:MASTER SLAVE JENKINS
+
+1)launch 2 instances 1)master 2)worker
+2)connect 2 instances to terminal
+3)In Master node terminal 
+
+	->Install Jenkins(vi jen.sh and sh jen.sh)
+	->install java
+	->update(yum upadte -y)
+	->$systemctl start jenkins
+
+4)In worker node terminal
+	->install java
+	->update(yum update -y)
+
+5)connect to jenkins UI by using master-node IPv4:8080
+6)install suggested plugins
+7)start using jenkins
+8)we need to crete worker nodes in CI server
+
+	->manage jenkins
+	->nodes
+	->new node
+	->provide node name
+	->select permanent agent
+9)create
+10)Name ->provide name
+11)description->optional
+12) no. of executors ->2
+13)remote root directory -> /home/ec2-user/build
+14)labels ->provide label name
+15)cust-workdir -> /home/ec2-user/build
+16)usage ->use this node as much as possible
+17)internal data directory ->remove remoting
+18)select -> use web-socket
+19)Availability ->keep this agent online as much as possible
+20)save
+21)The worker node is created but it is not connected
+22) to connect ->click on that node ->run from agent command line(UNIX) ->copy the code
+23)paste the code worker node terminal->enter ->refresh the jenkis page
+24)to keep it in online mode ->paste code ->in the end provide space & ->enter
+
+25)create freestyle job ->new item ->provide name ->freestyle ->ok
+26)select ->restrict where the project is run ->below
+27)select ->label expression that you created (label name) 
+28)build step ->execute shell ->uptime
+				pwd
+29)apply and save
+30)build now
+
+NOTE: to check whether the workspace is created or not
+ => in worker-node terminal ->come back to ec2-user-> $ls
+=>$cd build ->you have remoting and workspace ->in workspace your freestyle project is present
+
+Task: If the node will get destroyed the entire will be lost so you need to take the backup of running matser node and restore in new server(instance)
+----------------------------------------------------------
+HOW TO TAKE BACK UP
+
+In master-node terminal
+
+1) $systemctl status jenkins
+
+2) $systemctl stop jenkins
+
+3) $tar -zcvf jenbackup.tar.gz /var/lib/jenkins/
+
+4) Create one s3 bucket 
+
+5) create ->I Am role ->use case = ec2 ->access = s3 full access
+
+6)modify the instance with IAM role
+
+7) $aws s3 cp jenbackup.tar.gz s3://bucketname/jenbackup.tar.gz
+
+8) launch another instance(restore) to restore it
+
+9) connect to terminal ->install jenkins and java 
+
+10) cd /var/lib
+
+11) remove jenkins ->$rm -rf jenkins
+
+12)modify the instance with IAm role
+
+12)to restore -> $aws s3 cp s3://bucketname/jenbackup.tar.gz   jenbackup.tar.gz
+
+13)$ls
+
+14) $tar -zxvf jenbackup.tar.gz -C /
+
+15) paste public Ip:8080
+
+16) $systemctl start jenkins
+
+17) signin
+ 
+18)after this the jenkins has started you will get the backup of your node and freestyle project
+
+19)but that node will not be connected
+
+20)To connect the node to worker node terminal
+
+21) click on that node
+
+22) configure
+
+23) name ->keep it as it is 
+
+24) no. of executors -> 2
+
+25)remote root directory
+      /tmp/
+
+26)usage
+   keep this node as much as possible
+
+27)launch method
+   =>launch agents via SSH
+   =>Host :paste master-node IPv4 addresss
+   =>credentials => add => jenkins
+   =>kind->SSH user name with private key
+   =>IP ->slave or anything
+   =>user name ->ec2-user
+   =>private key -> enter directly -> add ->paste the private key file code
+   =>save
+28)credentials ->select ec2-user
+
+29)Host-key Verification Strategy
+     =>Manually trusted key verification strategy
+30)save
+31)refresh the page 

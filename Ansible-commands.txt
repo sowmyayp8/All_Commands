@@ -1,0 +1,501 @@
+REQUIREMENTS
+-------------------------
+2 - INSTANCES
+
+1->MASTER NODE
+2->SLAVE NODE
+
+CONFIGURATION	
+		
+MASTER NODE TERMINAL
+---------------------------
+1) $ sudo hostnamectl set-hostname master
+2) $/bin/bash
+2) $ sudo amazon-linux-extras install ansible2 -y
+3) $ansible --version
+4) $vi /etc/ansible/hosts
+  after #ex1 type
+ [demo]
+ patse private IP of worker node
+
+5) vi /etc/ansible/ansible.cfg
+ uncomment-> inventory and sudo-user = root
+
+6)useradd ansible   => cat /etc/passwd //to check the user
+7)passwd ansible
+ 1234
+1234
+
+8) $visudo
+after root permission-> root ALL=(ALL) ALL
+type-> ansible ALL=(ALL) NOPASSWD: ALL
+
+9) su - ansible
+10) sudo yum install httpd -y
+11) sudo which httpd
+12) exit
+13) vi /etc/ssh/sshd_config
+
+ uncomment: permitrootlogin ->yes
+uncomment  : passwordauthentication ->yes
+comment : passwordauthentication ->no
+
+14) service sshd restart
+15) su - ansible
+
+16) ssh-keygen       
+ enter
+enter
+enter
+
+17) ssh-copy-id ansible@private-ip of slave-node
+
+18)ssh private-ip-worker-node                           //it will connect to the worker node
+19)exit
+
+20)touch sample.txt
+21)ls
+
+---------------------------------------------------------------------------------------
+In SLAVE_NODE TERMINAL
+---------------------------------------------------------------------------------------
+
+1) sudo hostnamectl set-hostname slave
+2) /bin/bash
+3) useradd ansible
+4) passwd ansible ->1234-> 1234
+
+5) visudo
+ after root permission
+ansible ALL=(ALL) NOPASSWD: ALL
+
+5) vi /etc/ssh/sshd_config
+      uncomment: permitrootlogin ->yes
+       uncomment  : passwordauthentication ->yes
+       comment : passwordauthentication ->no
+
+5) service sshd restart 
+7)su - ansible
+8)ls 
+---------------------------------------------------------------------------------------------------
+ 
+NOTE: all commands  and scripts should be executed in master-node terminal
+
+------------------------------------------------------------------------------------------------------ 
+AD_Hoc Commands
+
+1)ansible demo -m ping
+2)ansible demo -a "pwd"
+3)ansible demo -a "ls-a"
+4)ansible demo -a "touch sample.txt"
+5)ansible demo -a "rm -rf sample.txt"
+6)ansible demo -a  "sudo yum install httpd"
+7)ansible demo -a "sudo which httpd"
+8)ansible demo -a systemctl status httpd"
+9)ansible demo -a "sudo yum remove httpd -y"
+10)ansible demo -b -a "which httpd"
+
+----------------------------------------------------------------------------------------------
+
+MODULE COMMANDS
+
+TASK 1: Install httpd by using module commands
+
+	To install httpd: $ ansible demo -b -m yum -a "pkg=httpd state=present"
+
+	To check httpd : $ ansible demo -b -m command -a "sudo which httpd"
+	
+	To start the sevice: $ ansible demo -b -m service -a "name=httpd state=started" 
+
+	To stop httpd: $ ansible demo -b -m service -a "name=httpd state=stopped" 
+	
+	To remove httpd: $  ansible demo -b -m name -a "name=httpd state=removed"
+---------------------------------------------------------------------------------------------------
+
+
+TASK 2:Create User by using Module Command
+
+	To Create User: $ ansible demo -b -m user -a "name=sow state=present"
+  
+	To Check User: $ ansible demo -b -a "cat /etc/passwd"
+
+	To delete User: $ ansible demo -b -m user -a "name=sow state=absent"
+
+	To check user:$ ansible demo -b -a "cat /etc/passwd"
+--------------------------------------------------------------------------------------
+
+  
+TASK 3: To create group and delete group by 
+ 
+ 	 To create group:$ ansible demo -b -m group -a "name=devops state=present"
+
+  	To check group: $ansible demo -b -a "cat /etc/group"
+
+ 	 To delete group: $ansible demo -b -m group -a "name=devops state=absent"
+   
+ 	 To check group: $ansible demo -b -a "cat /etc/group"
+------------------------------------------------------------------------------------------------------
+
+
+  TASK 4:To create directory and delete directory
+
+  	 To create directory: $ ansible demo -b -m file -a "path=/home/ansible/demo state=directory"
+
+   	To check directory: $ansible demo -b -m command -a "ls"
+   
+   	To delete directory: $ ansible demo -b -m file -a "path=/home/ansible/demo state=absent"
+
+   	To check directory:ansible demo -b -m command -a "ls"
+------------------------------------------------------------------------------
+
+TASK 5:To create directory and delete directory with permissions
+  
+	To create directory: $ ansible demo -b -m file -a "path=/home/ansible/demo state=directory mode=0755"
+ 	
+	To check directory: $ ansible demo -b -m command -a "ls"
+   	
+	To delete directory: $ ansible demo -b -m file -a "path=/home/ansible/demo state=absent mode=0755"
+   
+	To check directory: $ ansible demo -b -m command -a "ls"
+--------------------------------------------------------------------------------------------------------
+
+
+TASK 5:To create file and delete file
+  
+  	To create file: $ ansible demo -b -m file -a "path=/home/ansible/demo.txt state=touch"
+ 
+	To check file: $ ansible demo -b -m command -a "ls"
+   
+	To delete file: $ ansible demo -b -m file -a "path=/home/ansible/demo.txt state=touch state=absent"
+ 
+	To check file: $ansible demo -b -m command -a "ls"
+----------------------------------------------------------------------------------------------
+  
+TASK 6:To create directory and delete directory with permissions
+
+	To create file : $ ansible demo -b -m file -a "path=/home/ansible/demo.txt state=touch mode=0755"
+ 	
+	 To check file: $ ansible demo -b -m command -a "ls"
+	
+	To delete file: $ansible demo -b -m file -a "path=/home/ansible/demo.txt state=absent mode=0755"
+  
+	 To check file: $ansible demo -b -m command -a "ls"
+	
+	To copy the file: $ ansible demo -b -m copy -a "src=/home/ansible/demo.txt dest=/home/ansible "
+   
+------------------------------------------------------------------------------------------------------------------
+ANSIBLE PLAYBOOK
+----------------------------------------------------------------------------------------------------------------------
+
+ TASK 1: INSTALL AND START HTTPD
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+  - name: install httpd
+    command: sudo yum install httpd -y
+  - name: start httpd
+    command: systemctl start httpd
+
+
+
+-----------------------------------------------------------------------------------
+
+TASK 2: BY USING VARIABLE SECTION INSTALL HTTPD
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  vars:
+    httpd_package_name: httpd
+    httpd_package_state: present
+  tasks:
+  - name: install httpd
+    yum:
+      name: "{{httpd_package_name}}"
+      state: "{{httpd_package_state}}"
+
+		OR
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  vars:
+    pkgname: httpd
+  tasks:
+  - name: install httpd
+    action: yum name= '{{pkgname}}' state=installed
+
+
+-------------------------------------------------------------------------------------
+
+TASK 3 : HANDLERS AND NOTIFY
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+    - name: install httpd
+      action: yum name=httpd state=installed
+      notify: restart httpd
+  handlers:
+    - name: restart httpd
+      action: service name=httpd state=restarted
+----------------------------------------------------------------------------------------------
+
+Task 4: LOOPS
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+  - name: Create users
+    user:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - superman
+      - batman
+      - ironman
+      - spiderman
+
+check the users in worker node:  $ su - ansible
+
+				$cat /etc/passwd
+
+
+------------------------------------------------------------------------------------------
+
+Task 5: CONDITIONS
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+  - name: install apache
+    command: apt-get -y install apache2
+    when: ansible_os_family == "Debian"
+  - name: install httpd
+    command: yum -y install httpd
+    when: ansible_os_family == "RedHat"
+---------------------------------------------------------------------------------------------------
+
+=> To CHECK THE PLAYBOOK : ansible-playbook play.yml --check
+
+=> To RUN THE PLAYBOOK : ansible-playbook play.yml
+
+=> TO KNOW THE OS FAMILY
+
+	$ansible demo -m setup
+
+=> TO ENCRYPT THE FILE
+
+	$ansible-vault encrypt loop.yml
+
+New Vault password:
+Confirm New Vault password:
+Encryption successful
+
+=> cat file.yml =>it will show in encrypted form
+
+=>To VIEW THE ENCRYPTED FILE
+
+	$ ansible-vault view loop.yml
+Vault password:
+
+=>TO DECRYPT THE FILE
+	
+	 $ ansible-vault decrypt loop.yml
+Vault password:
+Decryption successful
+
+=>To EDIT THE DATA IN ENCRYPTED FILE
+
+	$ ansible-vault edit loop.yml
+Vault password:
+
+--------------------------------------------------------------------------------------
+
+TASK 6: TO COPY THE FILE FROM MASTER NODE TO WORKER NODE
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+    - name: Copy file
+      copy:
+        src: /home/ansible/demo.txt
+        dest: /home/ansible
+
+you can check in worker node => su - ansible =>ls
+-----------------------------------------------------------------------------------------------
+
+
+TASKS: LAUNCH 4 INSTANCES 1-MASTER NODE 3-SLAVE NODES
+=>FIRST TASK -> IF YOU PASTE PUBLIC IP OF ANY SLAVE NODE YOU NEED TO GET TESTPAGE
+=> ADVANCE TASK ->YOU NEED TO OVERRIDE THE TESTPAGE WITH THE CONTENT
+	<h1>welcome to devops</h1>
+	<h1>I know ansible</h1>
+	<h1>so i lost good sleep</h1>
+
+configure master node and slave nodes ->refer starting configuration
+
+=>after configuring master nodes and slave nodes
+=>in master node terminal -> ssh-keygen
+			     ssh-copy-id ansible ansible@privateip_of_slave1
+			     ssh privateip_of_slave1
+			     exit
+
+connect to one slave node then exit then connect to another slave node and exit continue to all slave nodes
+
+=>write playbook to get testpage
+
+vi test.yml
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+  - name: install httpd
+    command: sudo yum install httpd -y
+  - name: start httpd
+    command: systemctl start httpd
+
+
+=> you can check by pasting public ip of worker node in new tab
+
+
+
+
+advance task playbook
+
+
+=>create one html file with the the given content
+
+	index.html
+
+	<html>
+	<body>
+		<h1>welcome to devops</h1>
+		<h1>I know ansible</h1>
+		<h1>so i lost good sleep</h1>
+	</body>
+	</html>
+
+
+
+vi override.yml
+
+---
+- name: httpd
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+    - name: Copy file
+      copy:
+        src: /home/ansible/index.html
+        dest: /var/www/html/index.html
+
+=>refresh the tab that you pasted the public ip
+
+
+--------------------------------------------------------------------------------------------------
+
+LAUNCH 2 INSTANCES IF YOU HOST PUBLIC IP OF ANY INSTANCE YOU NEED TO GET TESTPAGE AND PULL DOCKER IMAGE AND RUN THE CONTAINER BY ASSIGNING PORT NUMBER AND 
+IF ONE INSTANCE IS GETTING TEMINATED THEN AUTOMATICALLY ANOTHER INSTANCE INSTANCE SHOULD BE LAUNCHED
+
+=>launche template
+=>in user data pate the scripts
+
+#!/bin/bash
+yum update -y
+yum install httpd -y
+systemctl start httpd
+systemctl enable httpd
+sudo yum install docker -y
+systemctl start docker
+systemctl enable docker
+docker pull httpd
+docker run -it -d -p 8000:80 htttpd
+
+
+=>create autoscaling group
+
+=>copy the public ip and paste in new tab you get testpage
+
+
+=>advance task to override the testpage
+
+=> connect any one instance to terminal
+
+1) $ docker ps
+2) $ docker exec -it containerid /bin/bash
+3) $ cd htdocs
+4) $ cat > index.html
+	<html>
+	<body> 
+		<h1>welcome to devops</h1>
+		<h1>I know ansible</h1>
+		<h1>so i lost good sleep</h1>
+	</body>
+	</html>
+ctrl+c
+5)copy public ip of this (index.html overrided instance) instance paste in new tab with port 8000
+  ex:public_ip:8000
+
+
+
+
+
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
